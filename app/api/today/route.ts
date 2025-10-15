@@ -1,19 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { makeSupabaseRequest, Ephemeris } from '@/lib/supabase'
 
-// Función para obtener la efeméride para una fecha específica
-async function getEphemerisForDate(date: string): Promise<Ephemeris | null> {
+// Función para obtener las efemérides para una fecha específica
+async function getEphemeridesForDate(date: string): Promise<Ephemeris[]> {
   try {
-    const data = await makeSupabaseRequest(`/ephemerides?display_date=eq.${date}`)
+    const data = await makeSupabaseRequest(
+      `/ephemerides?display_date=eq.${date}&order=priority.desc,created_at.asc`
+    )
 
     if (!data || data.length === 0) {
-      return null
+      return []
     }
 
-    return data[0]
+    return data
   } catch (error) {
-    console.error('💥 Error en getEphemerisForDate:', error)
-    return null
+    console.error('💥 Error en getEphemeridesForDate:', error)
+    return []
   }
 }
 
@@ -39,28 +41,35 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const date = searchParams.get('date')
 
-    // Si se especifica una fecha, obtener esa efeméride específica
+    // Si se especifica una fecha, obtener esas efemérides específicas
     if (date) {
-      const ephemeris = await getEphemerisForDate(date)
+      const ephemerides = await getEphemeridesForDate(date)
       
-      if (!ephemeris) {
+      if (ephemerides.length === 0) {
         return NextResponse.json(
-          { error: 'No se encontró efeméride para la fecha especificada' },
+          { error: 'No se encontraron efemérides para la fecha especificada' },
           { status: 404 }
         )
       }
       
-      return NextResponse.json({ data: ephemeris })
+      return NextResponse.json({ 
+        data: ephemerides,
+        count: ephemerides.length 
+      })
     }
 
-    // Por defecto, obtener la efeméride de hoy
+    // Por defecto, obtener las efemérides de hoy
     const today = new Date()
     const todayString = today.toISOString().split('T')[0]
     
-    const todayEphemeris = await getEphemerisForDate(todayString)
+    const todayEphemerides = await getEphemeridesForDate(todayString)
     
-    if (todayEphemeris) {
-      return NextResponse.json({ data: todayEphemeris, isToday: true })
+    if (todayEphemerides.length > 0) {
+      return NextResponse.json({ 
+        data: todayEphemerides,
+        count: todayEphemerides.length,
+        isToday: true 
+      })
     }
 
     // Si no hay para hoy, obtener la más reciente
@@ -77,7 +86,8 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json({ 
-      data: latestEphemeris, 
+      data: [latestEphemeris],
+      count: 1,
       isToday: false,
       message: 'Mostrando la efeméride más reciente'
     })

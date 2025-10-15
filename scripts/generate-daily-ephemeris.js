@@ -274,6 +274,7 @@ async function insertEphemeris(targetDate, ephemerisData) {
         historical_day: ephemerisData.historicalDay,
         historical_month: ephemerisData.historicalMonth,
         historical_year: ephemerisData.historicalYear,
+        priority: 1, // Prioridad por defecto
     }
 
     console.log(`💾 Insertando efeméride en la base de datos...`)

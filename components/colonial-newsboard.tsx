@@ -20,7 +20,8 @@ interface EphemerisItem {
 }
 
 export function ColonialNewsboard() {
-  const [ephemeris, setEphemeris] = useState<EphemerisItem | null>(null)
+  const [ephemerides, setEphemerides] = useState<EphemerisItem[]>([])
+  const [currentIndex, setCurrentIndex] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [displayedTitle, setDisplayedTitle] = useState("")
@@ -29,16 +30,18 @@ export function ColonialNewsboard() {
   const [isDescriptionComplete, setIsDescriptionComplete] = useState(false)
   const [showShareMenu, setShowShareMenu] = useState(false)
 
-  // Obtener efeméride del día
+  const ephemeris = ephemerides[currentIndex] || null
+
+  // Obtener efemérides del día
   useEffect(() => {
-    async function fetchEphemeris() {
+    async function fetchEphemerides() {
       try {
         const response = await fetch('/api/today')
         if (!response.ok) {
-          throw new Error('Error al obtener la efeméride')
+          throw new Error('Error al obtener las efemérides')
         }
         const result = await response.json()
-        setEphemeris(result.data)
+        setEphemerides(result.data || [])
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Error desconocido')
         console.error('Error:', err)
@@ -47,16 +50,20 @@ export function ColonialNewsboard() {
       }
     }
 
-    fetchEphemeris()
+    fetchEphemerides()
   }, [])
+
+  // Resetear typewriter al cambiar de efeméride
+  useEffect(() => {
+    setDisplayedTitle("")
+    setDisplayedDescription("")
+    setIsTitleComplete(false)
+    setIsDescriptionComplete(false)
+  }, [currentIndex])
 
   // Efecto de escritura para el evento
   useEffect(() => {
     if (!ephemeris) return
-
-    setDisplayedTitle("")
-    setDisplayedDescription("")
-    setIsTitleComplete(false)
 
     // Extraer título (primera oración del evento)
     const sentences = ephemeris.event.split('. ')
@@ -327,6 +334,57 @@ export function ColonialNewsboard() {
             </div>
           </div>
         </Card>
+
+        {/* Controles de Carrusel */}
+        {ephemerides.length > 1 && (
+          <div className="mt-8 space-y-4">
+            {/* Indicador de posición */}
+            <div className="text-center">
+              <Badge variant="secondary" className="text-sm">
+                Efeméride {currentIndex + 1} de {ephemerides.length}
+              </Badge>
+            </div>
+
+            {/* Navegación */}
+            <div className="flex justify-center items-center gap-6">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentIndex(prev => Math.max(0, prev - 1))}
+                disabled={currentIndex === 0}
+                className="border-secondary hover:bg-secondary hover:text-secondary-foreground"
+              >
+                ← Anterior
+              </Button>
+
+              {/* Dots indicator */}
+              <div className="flex gap-2 items-center">
+                {ephemerides.map((_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setCurrentIndex(i)}
+                    className={`h-2 rounded-full transition-all ${
+                      i === currentIndex 
+                        ? "bg-secondary w-8" 
+                        : "bg-secondary/30 w-2"
+                    }`}
+                    aria-label={`Ir a efeméride ${i + 1}`}
+                  />
+                ))}
+              </div>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentIndex(prev => Math.min(ephemerides.length - 1, prev + 1))}
+                disabled={currentIndex === ephemerides.length - 1}
+                className="border-secondary hover:bg-secondary hover:text-secondary-foreground"
+              >
+                Siguiente →
+              </Button>
+            </div>
+          </div>
+        )}
 
         <div className="text-center mt-10 pt-8 border-t-2 border-secondary">
 

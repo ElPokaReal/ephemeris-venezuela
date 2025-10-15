@@ -17,6 +17,7 @@ export interface Ephemeris {
   historical_day: number | null
   historical_month: number | null
   historical_year: number | null
+  priority: number
   created_at: string | null
   updated_at: string | null
 }
