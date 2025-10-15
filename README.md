@@ -167,42 +167,6 @@ El proyecto incluye un workflow de GitHub Actions que genera automáticamente un
 
 📖 **Guía completa:** Ver [.github/WORKFLOW_SETUP.md](.github/WORKFLOW_SETUP.md)
 
-#### Opción 2: Cron Job Local
-
-Crea `.github/workflows/daily-ephemeris.yml`:
-
-\`\`\`yaml
-name: Generate Daily Ephemeris
-
-on:
-  schedule:
-    - cron: '0 4 * * *'  # 4 AM UTC
-  workflow_dispatch:
-
-jobs:
-  generate:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18'
-      
-      - name: Install dependencies
-        run: npm install
-      
-      - name: Generate ephemeris
-        env:
-          GEMINI_API_KEY: \${{ secrets.GEMINI_API_KEY }}
-          SUPABASE_URL: \${{ secrets.SUPABASE_URL }}
-          SUPABASE_SERVICE_KEY: \${{ secrets.SUPABASE_SERVICE_KEY }}
-        run: npm run generate
-\`\`\`
-
-Configura los secrets en **Settings** → **Secrets and variables** → **Actions**
-
 #### Opción 2: Cron Job en Servidor
 
 \`\`\`bash
