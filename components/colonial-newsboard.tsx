@@ -17,6 +17,8 @@ interface EphemerisItem {
   historical_day: number | null
   historical_month: number | null
   historical_year: number | null
+  source?: string | null
+  confidence?: 'high' | 'medium' | 'low' | null
 }
 
 export function ColonialNewsboard() {
@@ -286,10 +288,19 @@ export function ColonialNewsboard() {
 
             {/* Description with typewriter effect */}
             {displayedDescription && (
-              <p className="text-foreground/90 leading-relaxed text-lg md:text-xl lg:text-2xl text-pretty mb-8">
+              <p className="text-foreground/90 leading-relaxed text-lg md:text-xl lg:text-2xl text-pretty mb-6">
                 {displayedDescription}
                 {!isDescriptionComplete && <span className="animate-pulse">|</span>}
               </p>
+            )}
+
+            {/* Source information */}
+            {ephemeris?.source && isDescriptionComplete && (
+              <div className="mb-6 text-center">
+                <p className="text-sm text-muted-foreground italic">
+                  📚 Fuente: {ephemeris.source}
+                </p>
+              </div>
             )}
 
             {/* Share buttons */}

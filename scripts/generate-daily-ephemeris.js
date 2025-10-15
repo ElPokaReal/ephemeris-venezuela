@@ -113,16 +113,20 @@ function getMonthName(month) {
 
 // Función para generar efeméride usando Gemini
 async function generateEphemeris(targetDate) {
-    const day = targetDate.getDate()
-    const month = targetDate.getMonth() + 1
+    const day = targetDate.getUTCDate()
+    const month = targetDate.getUTCMonth() + 1
 
     console.log(`🤖 Generando efeméride para ${day} de ${getMonthName(month)}...`)
 
     const prompt = `Genera una efeméride histórica de Venezuela para el ${day} de ${getMonthName(month)}.
 
-Busca un evento histórico REAL y VERIFICABLE relacionado con Venezuela que haya ocurrido un ${day} de ${getMonthName(month)} de cualquier año.
+INSTRUCCIONES DE BÚSQUEDA:
+1. Busca en fuentes históricas confiables (Wikipedia, archivos nacionales, bibliotecas digitales)
+2. VERIFICA que el evento ocurrió EXACTAMENTE el ${day} de ${getMonthName(month)}
+3. Confirma el año exacto del evento
+4. NO uses eventos de fechas cercanas (si fue el 14, NO lo pongas para el 15)
 
-El evento puede ser sobre:
+El evento DEBE ser REAL y VERIFICABLE relacionado con Venezuela sobre:
 - Historia Patria (independencia, batallas, próceres)
 - Cultura (arte, literatura, música)
 - Ciencia y tecnología
@@ -131,27 +135,38 @@ El evento puede ser sobre:
 - Economía
 
 FORMATO DEL EVENTO:
-La primera oración debe ser el TÍTULO (máximo 150 caracteres): breve, conciso y directo.
-Las siguientes 2-3 oraciones deben ser la DESCRIPCIÓN (máximo 200 palabras): contexto e importancia.
+- Primera oración: TÍTULO conciso (máximo 150 caracteres)
+- Siguientes 2-3 oraciones: DESCRIPCIÓN con contexto e importancia (máximo 200 palabras)
+- Tono formal pero accesible
+- Enfatiza la relevancia para Venezuela
 
 Responde SOLO en formato JSON:
 {
     "event": "Título conciso del evento. Descripción breve con contexto histórico e importancia para Venezuela.",
     "historicalYear": año_del_evento,
     "historicalMonth": ${month},
-    "historicalDay": ${day}
+    "historicalDay": ${day},
+    "source": "Fuente de verificación (ej: Wikipedia, Biblioteca Nacional, etc.)",
+    "confidence": "high/medium/low"
 }
 
-IMPORTANTE:
-- El evento DEBE ser real y verificable
-- Primera oración: título conciso (máximo 150 caracteres)
-- Resto: descripción breve (2-3 oraciones, máximo 200 palabras)
-- Usa un tono formal pero accesible
-- Enfatiza la importancia para Venezuela
-- NO inventes eventos ficticios
+VALIDACIÓN OBLIGATORIA:
+✓ Fecha exacta verificada: ${day}/${month}/[año]
+✓ Evento documentado en fuentes históricas
+✓ Relevancia para Venezuela confirmada
+✗ NO inventes eventos
+✗ NO uses fechas aproximadas
+✗ NO confundas días cercanos
 
-EJEMPLO:
-"El 5 de julio de 1811 se firma el Acta de la Independencia de Venezuela. Este documento histórico marcó la separación definitiva de España y estableció la Primera República. Fue un acto de valentía que inspiró a toda Hispanoamérica en su lucha por la libertad."`
+EJEMPLO CORRECTO:
+{
+    "event": "Nace Juan Vicente Bolívar y Ponte, padre del Libertador. El 15 de octubre de 1726 nació en La Victoria, Estado Aragua, Juan Vicente Bolívar y Ponte, padre de Simón Bolívar. Fue activo propulsor de la independencia venezolana y su influencia fue fundamental en la formación de los valores de su ilustre hijo.",
+    "historicalYear": 1726,
+    "historicalMonth": 10,
+    "historicalDay": 15,
+    "source": "Wikipedia - Juan Vicente Bolívar y Ponte",
+    "confidence": "high"
+}`
 
     try {
         const response = await makeRequest(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
@@ -229,7 +244,19 @@ EJEMPLO:
             throw new Error('Respuesta de IA incompleta')
         }
 
+        // Validar nivel de confianza
+        if (ephemeris.confidence && ephemeris.confidence === 'low') {
+            console.log('⚠️  Advertencia: La IA reportó baja confianza en este evento')
+        }
+
         console.log(`✅ Efeméride generada: ${ephemeris.event.substring(0, 100)}...`)
+        if (ephemeris.source) {
+            console.log(`📚 Fuente: ${ephemeris.source}`)
+        }
+        if (ephemeris.confidence) {
+            console.log(`🎯 Nivel de confianza: ${ephemeris.confidence}`)
+        }
+        
         return ephemeris
     } catch (error) {
         console.error('❌ Error generando efeméride:', error.message)
@@ -266,15 +293,17 @@ async function insertEphemeris(targetDate, ephemerisData) {
     const displayDate = targetDate.toISOString().split('T')[0] // YYYY-MM-DD
 
     const ephemerisRecord = {
-        day: targetDate.getDate(),
-        month: targetDate.getMonth() + 1,
-        year: targetDate.getFullYear(),
+        day: targetDate.getUTCDate(),
+        month: targetDate.getUTCMonth() + 1,
+        year: targetDate.getUTCFullYear(),
         event: ephemerisData.event,
         display_date: displayDate,
         historical_day: ephemerisData.historicalDay,
         historical_month: ephemerisData.historicalMonth,
         historical_year: ephemerisData.historicalYear,
         priority: 1, // Prioridad por defecto
+        source: ephemerisData.source || null,
+        confidence: ephemerisData.confidence || null,
     }
 
     console.log(`💾 Insertando efeméride en la base de datos...`)
