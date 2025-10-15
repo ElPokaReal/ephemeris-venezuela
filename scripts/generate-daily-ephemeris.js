@@ -118,51 +118,29 @@ async function generateEphemeris(targetDate) {
 
     console.log(`🤖 Generando efeméride para ${day} de ${getMonthName(month)}...`)
 
-    const prompt = `Genera una efeméride histórica de Venezuela para el ${day} de ${getMonthName(month)}.
+    const prompt = `CRÍTICO: Busca un evento histórico VERIFICABLE de Venezuela que ocurrió EXACTAMENTE el ${day} de ${getMonthName(month)}.
 
-INSTRUCCIONES DE BÚSQUEDA:
-1. Busca en fuentes históricas confiables (Wikipedia, archivos nacionales, bibliotecas digitales)
-2. VERIFICA que el evento ocurrió EXACTAMENTE el ${day} de ${getMonthName(month)}
-3. Confirma el año exacto del evento
-4. NO uses eventos de fechas cercanas (si fue el 14, NO lo pongas para el 15)
+REGLAS OBLIGATORIAS:
+1. La fecha DEBE ser exacta: ${day} de ${getMonthName(month)} (NO aproximada, NO cercana)
+2. La URL DEBE existir y ser accesible
+3. Si NO encuentras un evento verificable para esta fecha exacta, responde con: {"error": "No se encontró evento verificable"}
+4. NO inventes información
+5. NO uses fechas cercanas (ej: si fue el 14, NO lo pongas para el 15)
 
-El evento DEBE ser REAL y VERIFICABLE relacionado con Venezuela sobre:
-- Historia Patria (independencia, batallas, próceres)
-- Cultura (arte, literatura, música)
-- Ciencia y tecnología
-- Deportes
-- Política y sociedad
-- Economía
-
-FORMATO DEL EVENTO:
-- Primera oración: TÍTULO conciso (máximo 150 caracteres)
-- Siguientes 2-3 oraciones: DESCRIPCIÓN con contexto e importancia (máximo 200 palabras)
-- Tono formal pero accesible
-- Enfatiza la relevancia para Venezuela
-
-Responde SOLO en formato JSON:
+Formato JSON:
 {
-    "event": "Título conciso del evento. Descripción breve con contexto histórico e importancia para Venezuela.",
-    "historicalYear": año_del_evento,
+    "event": "Título. Descripción breve.",
+    "historicalYear": año,
     "historicalMonth": ${month},
     "historicalDay": ${day},
-    "source": "Fuente de verificación (ej: Wikipedia, Biblioteca Nacional, etc.)",
-    "url": "https://... (URL completa con más información)",
-    "confidence": "high/medium/low"
+    "source": "Wikipedia",
+    "url": "https://es.wikipedia.org/wiki/Nombre_Exacto_Del_Artículo",
+    "confidence": "high"
 }
 
-VALIDACIÓN OBLIGATORIA:
-✓ Fecha exacta verificada: ${day}/${month}/[año]
-✓ Evento documentado en fuentes históricas
-✓ URL válida y accesible
-✓ Relevancia para Venezuela confirmada
-✗ NO inventes eventos
-✗ NO uses fechas aproximadas
-✗ NO confundas días cercanos
-
-EJEMPLO CORRECTO:
+Ejemplo CORRECTO (15 de octubre de 1726):
 {
-    "event": "Nace Juan Vicente Bolívar y Ponte, padre del Libertador. El 15 de octubre de 1726 nació en La Victoria, Estado Aragua, Juan Vicente Bolívar y Ponte, padre de Simón Bolívar. Fue activo propulsor de la independencia venezolana y su influencia fue fundamental en la formación de los valores de su ilustre hijo.",
+    "event": "Nace Juan Vicente Bolívar y Ponte, padre del Libertador. Nació en La Victoria, Estado Aragua. Fue propulsor de la independencia.",
     "historicalYear": 1726,
     "historicalMonth": 10,
     "historicalDay": 15,
@@ -184,10 +162,11 @@ EJEMPLO CORRECTO:
                 }]
             }],
             generationConfig: {
-                temperature: 0.7,
-                maxOutputTokens: 8192,
-                topK: 40,
-                topP: 0.95,
+                temperature: 0.3,
+                maxOutputTokens: 2048,
+                topK: 20,
+                topP: 0.8,
+                responseMimeType: "application/json"
             }
         })
 
@@ -234,7 +213,16 @@ EJEMPLO CORRECTO:
         console.log('✨ Contenido limpio (primeros 200 chars):', cleanContent.substring(0, 200))
 
         // Parsear la respuesta JSON
-        const ephemeris = JSON.parse(cleanContent)
+        let ephemeris
+        try {
+            ephemeris = JSON.parse(cleanContent)
+        } catch (parseError) {
+            console.error('❌ Error parseando JSON:', parseError.message)
+            console.error('📄 Contenido completo recibido:')
+            console.error(cleanContent)
+            console.error('📊 Longitud del contenido:', cleanContent.length)
+            throw new Error(`JSON inválido: ${parseError.message}`)
+        }
 
         // Verificar si la IA reportó que no encontró evento verificable
         if (ephemeris.error) {
@@ -267,6 +255,32 @@ EJEMPLO CORRECTO:
     } catch (error) {
         console.error('❌ Error generando efeméride:', error.message)
         return null
+    }
+}
+
+// Función para validar que una URL existe
+async function validateUrl(url) {
+    if (!url) return false
+    
+    try {
+        console.log(`🔍 Validando URL: ${url}`)
+        const response = await makeRequest(url, {
+            method: 'HEAD',
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (compatible; EphemerisBot/1.0)'
+            }
+        })
+        
+        const isValid = response.status >= 200 && response.status < 400
+        if (isValid) {
+            console.log(`✅ URL válida (status: ${response.status})`)
+        } else {
+            console.log(`❌ URL inválida (status: ${response.status})`)
+        }
+        return isValid
+    } catch (error) {
+        console.log(`❌ URL no accesible: ${error.message}`)
+        return false
     }
 }
 
@@ -378,6 +392,18 @@ async function main() {
         if (!ephemerisData) {
             console.error('❌ No se pudo generar la efeméride')
             process.exit(1)
+        }
+
+        // Validar URL si existe
+        if (ephemerisData.url) {
+            const urlValid = await validateUrl(ephemerisData.url)
+            if (!urlValid) {
+                console.error('❌ La URL proporcionada no es válida o no existe')
+                console.error('⚠️  No se guardará esta efeméride. Por favor, verifica la información.')
+                process.exit(1)
+            }
+        } else {
+            console.log('⚠️  Advertencia: No se proporcionó URL de verificación')
         }
 
         // Insertar en la base de datos
