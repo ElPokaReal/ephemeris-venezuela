@@ -1,0 +1,58 @@
+name: Generar Efeméride Diaria de Venezuela
+
+on:
+  schedule:
+    # Ejecutar todos los días a las 04:00 UTC (12:00 AM Venezuela, UTC-4)
+    - cron: "0 4 * * *"
+
+  # Permitir ejecución manual
+  workflow_dispatch:
+    inputs:
+      date:
+        description: "Fecha específica (YYYY-MM-DD) - opcional"
+        required: false
+        type: string
+
+jobs:
+  generate-ephemeris:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Instalar dependencias
+        run: bun install
+
+      - name: Generar efeméride
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+        run: |
+          echo "🇻🇪 Iniciando generación de efeméride venezolana..."
+          echo "⏰ Hora de Venezuela: $(TZ='America/Caracas' date '+%Y-%m-%d %H:%M:%S %Z')"
+
+          if [ -n "${{ github.event.inputs.date }}" ]; then
+            echo "📅 Generando efeméride para fecha específica: ${{ github.event.inputs.date }}"
+            node scripts/generate-daily-ephemeris.js "${{ github.event.inputs.date }}"
+          else
+            echo "📅 Generando efeméride para mañana"
+            node scripts/generate-daily-ephemeris.js
+          fi
+
+          echo "✅ Efeméride generada exitosamente"
+
+      - name: Notificar resultado
+        if: always()
+        run: |
+          if [ ${{ job.status }} == 'success' ]; then
+            echo "✅ Workflow completado exitosamente"
+          else
+            echo "❌ Error en la generación de efeméride"
+          fi

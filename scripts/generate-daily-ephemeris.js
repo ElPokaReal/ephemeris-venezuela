@@ -13,6 +13,37 @@
 
 const https = require('https')
 const http = require('http')
+const fs = require('fs')
+const path = require('path')
+
+// Cargar variables de entorno desde .env.local
+function loadEnvFile() {
+    const envPath = path.join(__dirname, '..', '.env.local')
+    
+    if (fs.existsSync(envPath)) {
+        const envContent = fs.readFileSync(envPath, 'utf-8')
+        envContent.split('\n').forEach(line => {
+            line = line.trim()
+            // Ignorar comentarios y líneas vacías
+            if (!line || line.startsWith('#')) return
+            
+            const [key, ...valueParts] = line.split('=')
+            if (key && valueParts.length > 0) {
+                const value = valueParts.join('=').trim()
+                // Solo establecer si no existe ya en process.env
+                if (!process.env[key.trim()]) {
+                    process.env[key.trim()] = value
+                }
+            }
+        })
+        console.log('✅ Variables de entorno cargadas desde .env.local')
+    } else {
+        console.log('⚠️  Archivo .env.local no encontrado')
+    }
+}
+
+// Cargar variables de entorno
+loadEnvFile()
 
 // Configuración desde variables de entorno
 const SUPABASE_URL = process.env.SUPABASE_URL
@@ -99,9 +130,13 @@ El evento puede ser sobre:
 - Política y sociedad
 - Economía
 
+FORMATO DEL EVENTO:
+La primera oración debe ser el TÍTULO (máximo 150 caracteres): breve, conciso y directo.
+Las siguientes 2-3 oraciones deben ser la DESCRIPCIÓN (máximo 200 palabras): contexto e importancia.
+
 Responde SOLO en formato JSON:
 {
-    "event": "Descripción detallada del evento en español (200-300 palabras), con tono formal y patriótico",
+    "event": "Título conciso del evento. Descripción breve con contexto histórico e importancia para Venezuela.",
     "historicalYear": año_del_evento,
     "historicalMonth": ${month},
     "historicalDay": ${day}
@@ -109,13 +144,17 @@ Responde SOLO en formato JSON:
 
 IMPORTANTE:
 - El evento DEBE ser real y verificable
-- Incluye detalles históricos relevantes
-- Usa un tono formal y respetuoso
+- Primera oración: título conciso (máximo 150 caracteres)
+- Resto: descripción breve (2-3 oraciones, máximo 200 palabras)
+- Usa un tono formal pero accesible
 - Enfatiza la importancia para Venezuela
-- NO inventes eventos ficticios`
+- NO inventes eventos ficticios
+
+EJEMPLO:
+"El 5 de julio de 1811 se firma el Acta de la Independencia de Venezuela. Este documento histórico marcó la separación definitiva de España y estableció la Primera República. Fue un acto de valentía que inspiró a toda Hispanoamérica en su lucha por la libertad."`
 
     try {
-        const response = await makeRequest(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+        const response = await makeRequest(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -128,35 +167,53 @@ IMPORTANTE:
             }],
             generationConfig: {
                 temperature: 0.7,
-                maxOutputTokens: 1024,
+                maxOutputTokens: 8192,
                 topK: 40,
                 topP: 0.95,
             }
         })
 
         if (response.status !== 200) {
+            console.error('📋 Respuesta completa:', JSON.stringify(response.data, null, 2))
             throw new Error(`Error de Gemini: ${response.status} ${JSON.stringify(response.data)}`)
         }
 
+        // Debug: mostrar estructura de la respuesta
+        console.log('📋 Respuesta de Gemini recibida')
+        
         const content = response.data.candidates?.[0]?.content?.parts?.[0]?.text
 
         if (!content) {
+            console.error('❌ Estructura de respuesta:', JSON.stringify(response.data, null, 2))
+            console.error('❌ Candidates:', response.data.candidates)
+            if (response.data.candidates?.[0]) {
+                console.error('❌ Primer candidate:', JSON.stringify(response.data.candidates[0], null, 2))
+            }
             throw new Error('No se recibió contenido de Gemini')
         }
 
         // Limpiar la respuesta y extraer JSON si está en un bloque de código
         let cleanContent = content.trim()
 
-        // Si la respuesta está en un bloque de código markdown, extraer el contenido
-        if (cleanContent.startsWith('```json') || cleanContent.startsWith('```')) {
-            const lines = cleanContent.split('\n')
-            const startIndex = lines.findIndex(line => line.startsWith('```'))
-            const endIndex = lines.findIndex((line, index) => index > startIndex && line.trim() === '```')
+        console.log('📝 Contenido original (primeros 200 chars):', cleanContent.substring(0, 200))
 
-            if (startIndex !== -1 && endIndex !== -1) {
-                cleanContent = lines.slice(startIndex + 1, endIndex).join('\n').trim()
+        // Remover bloques de código markdown
+        if (cleanContent.includes('```')) {
+            // Buscar el patrón ```json o ``` seguido de JSON
+            const jsonMatch = cleanContent.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/)
+            if (jsonMatch && jsonMatch[1]) {
+                cleanContent = jsonMatch[1].trim()
+            } else {
+                // Si no encuentra el patrón, intentar remover todas las líneas con ```
+                cleanContent = cleanContent
+                    .split('\n')
+                    .filter(line => !line.trim().startsWith('```'))
+                    .join('\n')
+                    .trim()
             }
         }
+
+        console.log('✨ Contenido limpio (primeros 200 chars):', cleanContent.substring(0, 200))
 
         // Parsear la respuesta JSON
         const ephemeris = JSON.parse(cleanContent)

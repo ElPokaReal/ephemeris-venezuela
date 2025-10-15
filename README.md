@@ -2,10 +2,11 @@
 
 Una aplicación web moderna que genera y muestra diariamente efemérides históricas de Venezuela con una hermosa interfaz de estilo colonial.
 
-![Efemérides Venezolanas](https://img.shields.io/badge/Venezuela-Historia-FFD700?style=for-the-badge)
-![Next.js](https://img.shields.io/badge/Next.js-15-black?style=for-the-badge&logo=next.js)
-![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?style=for-the-badge&logo=typescript)
-![Gemini](https://img.shields.io/badge/Gemini-AI-4285F4?style=for-the-badge&logo=google)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/ElPokaReal/ephemeris-venezuela)
+![Next.js](https://img.shields.io/badge/Next.js-15-black?style=flat-square&logo=next.js)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?style=flat-square&logo=typescript)
+![Gemini](https://img.shields.io/badge/Gemini-AI-4285F4?style=flat-square&logo=google)
+![Supabase](https://img.shields.io/badge/Supabase-Database-3ECF8E?style=flat-square&logo=supabase)
 
 ## 🎯 Características
 
@@ -44,108 +45,129 @@ Una aplicación web moderna que genera y muestra diariamente efemérides histór
 - Una cuenta en [Supabase](https://supabase.com)
 - Una API Key de [Google Gemini](https://makersuite.google.com/app/apikey)
 
-## 🚀 Instalación
+## 🚀 Inicio Rápido
 
 ### 1. Clonar el repositorio
 
 \`\`\`bash
-git clone <tu-repositorio>
-cd daily-ephemeris-venezuela
+git clone https://github.com/ElPokaReal/ephemeris-venezuela.git
+cd ephemeris-venezuela
 \`\`\`
 
 ### 2. Instalar dependencias
 
 \`\`\`bash
 npm install
-# o
-bun install
-# o
-pnpm install
 \`\`\`
 
 ### 3. Configurar Supabase
 
 1. Crea un nuevo proyecto en [Supabase](https://app.supabase.com)
-2. Ve a SQL Editor y ejecuta el script `supabase-schema.sql`:
+2. Ve a **SQL Editor** y ejecuta el contenido de `supabase-schema.sql`
+3. Obtén tus credenciales en **Settings** → **API**:
+   - **Project URL** (SUPABASE_URL)
+   - **anon/public key** (SUPABASE_ANON_KEY)
+   - **service_role key** (SUPABASE_SERVICE_KEY) ⚠️ Mantén esto en secreto
 
-\`\`\`bash
-# Copia el contenido de supabase-schema.sql y ejecútalo en el SQL Editor de Supabase
-\`\`\`
+### 4. Configurar Gemini AI
 
-3. Obtén tus credenciales:
-   - Ve a **Settings** → **API**
-   - Copia la **URL** del proyecto
-   - Copia la **anon/public key**
-   - Copia la **service_role key** (¡mantén esto en secreto!)
+1. Ve a [Google AI Studio](https://makersuite.google.com/app/apikey)
+2. Crea una API Key
+3. Copia la key generada
 
-### 4. Configurar Variables de Entorno
-
-Crea un archivo `.env.local` en la raíz del proyecto:
+### 5. Configurar Variables de Entorno
 
 \`\`\`bash
 cp .env.example .env.local
 \`\`\`
 
-Edita `.env.local` con tus credenciales:
+Edita `.env.local`:
 
 \`\`\`env
 # Gemini API Key
 GEMINI_API_KEY=tu_gemini_api_key_aqui
 
 # Supabase Configuration
-NEXT_PUBLIC_SUPABASE_URL=https://tu-proyecto.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=tu_supabase_anon_key_aqui
-SUPABASE_SERVICE_ROLE_KEY=tu_supabase_service_role_key_aqui
-
-# Token secreto para el cron job (opcional, genera uno aleatorio)
-CRON_SECRET=tu_token_secreto_aqui
+SUPABASE_URL=https://tu-proyecto.supabase.co
+SUPABASE_SERVICE_KEY=tu_supabase_service_role_key_aqui
+SUPABASE_ANON_KEY=tu_supabase_anon_key_aqui
 \`\`\`
 
-### 5. Ejecutar en desarrollo
+### 6. Generar primera efeméride
+
+\`\`\`bash
+npm run generate
+\`\`\`
+
+### 7. Ejecutar en desarrollo
 
 \`\`\`bash
 npm run dev
-# o
-bun dev
 \`\`\`
 
 Abre [http://localhost:3000](http://localhost:3000) en tu navegador.
 
 ## 📝 Uso
 
-### Generar una Efeméride Manualmente
-
-Durante el desarrollo, puedes generar una efeméride para el día actual visitando:
-
-\`\`\`
-http://localhost:3000/api/generate-ephemeris
-\`\`\`
-
-O usando curl:
+### Comandos Disponibles
 
 \`\`\`bash
-curl -X POST http://localhost:3000/api/generate-ephemeris \
-  -H "Authorization: Bearer dev-secret-token"
+# Desarrollo
+npm run dev              # Inicia servidor de desarrollo
+
+# Producción
+npm run build            # Construye la aplicación
+npm start                # Inicia servidor de producción
+
+# Generación de Efemérides
+npm run generate         # Genera efeméride para mañana
+npm run generate:today   # Genera efeméride para hoy
+node scripts/generate-daily-ephemeris.js 2025-01-15  # Fecha específica
+
+# Utilidades
+npm run lint             # Ejecuta ESLint
+\`\`\`
+
+### Generar Efemérides
+
+El proyecto incluye un script Node.js para generar efemérides:
+
+\`\`\`bash
+# Generar para mañana (por defecto)
+npm run generate
+
+# Generar para una fecha específica
+node scripts/generate-daily-ephemeris.js 2025-12-25
+
+# Ver ayuda
+node scripts/generate-daily-ephemeris.js --help
 \`\`\`
 
 ### Automatizar la Generación Diaria
 
-Para producción, configura un cron job que llame al endpoint de generación diariamente:
+#### Opción 1: GitHub Actions (Recomendado) ✅
 
-#### Opción 1: Vercel Cron Jobs
+El proyecto incluye un workflow de GitHub Actions que genera automáticamente una efeméride todos los días a las **12:00 AM hora de Venezuela**.
 
-Crea un archivo `vercel.json`:
+**Configuración:**
 
-\`\`\`json
-{
-  "crons": [{
-    "path": "/api/generate-ephemeris",
-    "schedule": "0 0 * * *"
-  }]
-}
-\`\`\`
+1. El workflow ya está incluido en `.github/workflows/ephemeris-venezuela.yml`
+2. Configura los siguientes **GitHub Secrets** en tu repositorio:
+   - `GEMINI_API_KEY` - Tu API key de Google Gemini
+   - `SUPABASE_URL` - URL de tu proyecto Supabase
+   - `SUPABASE_SERVICE_KEY` - Service role key de Supabase
 
-#### Opción 2: GitHub Actions
+3. El workflow se ejecutará automáticamente cada día a medianoche (Venezuela)
+
+**Ejecución Manual:**
+- Ve a la pestaña **Actions** en GitHub
+- Selecciona "Generar Efeméride Diaria de Venezuela"
+- Click en "Run workflow"
+- Opcionalmente, especifica una fecha en formato `YYYY-MM-DD`
+
+📖 **Guía completa:** Ver [.github/WORKFLOW_SETUP.md](.github/WORKFLOW_SETUP.md)
+
+#### Opción 2: Cron Job Local
 
 Crea `.github/workflows/daily-ephemeris.yml`:
 
@@ -154,45 +176,73 @@ name: Generate Daily Ephemeris
 
 on:
   schedule:
-    - cron: '0 4 * * *'  # 4 AM UTC (12 AM Venezuela)
+    - cron: '0 4 * * *'  # 4 AM UTC
   workflow_dispatch:
 
 jobs:
   generate:
     runs-on: ubuntu-latest
     steps:
-      - name: Call API
-        run: |
-          curl -X POST ${{ secrets.APP_URL }}/api/generate-ephemeris \
-            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"
+      - uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      
+      - name: Install dependencies
+        run: npm install
+      
+      - name: Generate ephemeris
+        env:
+          GEMINI_API_KEY: \${{ secrets.GEMINI_API_KEY }}
+          SUPABASE_URL: \${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: \${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: npm run generate
+\`\`\`
+
+Configura los secrets en **Settings** → **Secrets and variables** → **Actions**
+
+#### Opción 2: Cron Job en Servidor
+
+\`\`\`bash
+# Agregar al crontab
+0 4 * * * cd /ruta/al/proyecto && npm run generate >> /var/log/ephemeris.log 2>&1
 \`\`\`
 
 #### Opción 3: Servicio Externo
 
-Usa servicios como [cron-job.org](https://cron-job.org) o [EasyCron](https://www.easycron.com/) para hacer una petición POST diaria a tu endpoint.
+Usa [cron-job.org](https://cron-job.org) o [EasyCron](https://www.easycron.com/) para ejecutar el script diariamente.
 
 ## 🗂️ Estructura del Proyecto
 
 \`\`\`
-daily-ephemeris-venezuela/
+ephemeris-venezuela/
 ├── app/
 │   ├── api/
-│   │   ├── generate-ephemeris/   # Genera efemérides con Gemini
-│   │   │   └── route.ts
-│   │   └── today/                # Obtiene la efeméride del día
+│   │   └── today/                # API para obtener efeméride del día
 │   │       └── route.ts
 │   ├── globals.css
-│   ├── layout.tsx
-│   └── page.tsx
+│   ├── layout.tsx                # Layout principal con metadata
+│   └── page.tsx                  # Página principal
 ├── components/
-│   ├── colonial-newsboard.tsx    # Componente principal
+│   ├── colonial-newsboard.tsx    # Componente principal de efemérides
+│   ├── theme-provider.tsx        # Proveedor de tema
 │   └── ui/                       # Componentes shadcn/ui
 ├── lib/
-│   └── supabase.ts              # Cliente de Supabase
+│   ├── supabase.ts              # Cliente de Supabase (sin SDK)
+│   └── utils.ts                 # Utilidades
+├── scripts/
+│   └── generate-daily-ephemeris.js  # Script para generar efemérides
+├── docs/
+│   ├── GEMINI-API.md            # Documentación de Gemini API
+│   └── ENVIRONMENT-VARIABLES.md  # Guía de variables de entorno
 ├── hooks/
-│   └── use-mobile.ts
-├── .env.example                 # Plantilla de variables de entorno
+│   ├── use-mobile.ts
+│   └── use-toast.ts
+├── .env.example                 # Template de variables de entorno
 ├── supabase-schema.sql          # Esquema de la base de datos
+├── next.config.mjs              # Configuración de Next.js
 ├── package.json
 └── README.md
 \`\`\`
@@ -201,79 +251,73 @@ daily-ephemeris-venezuela/
 
 ### Modificar el Prompt de Gemini
 
-Edita el prompt en `app/api/generate-ephemeris/route.ts` para ajustar el estilo o contenido de las efemérides:
+Edita el prompt en `scripts/generate-daily-ephemeris.js`:
 
-\`\`\`typescript
-const prompt = \`Genera una efeméride histórica de Venezuela para el día \${dayMonth}.
+\`\`\`javascript
+const prompt = \`Genera una efeméride histórica de Venezuela para el \${day} de \${getMonthName(month)}.
 
-Requisitos:
-1. Debe ser un evento REAL y VERIFICABLE de la historia de Venezuela
-2. Incluye el año exacto del evento
-// ... personaliza aquí
+Busca un evento histórico REAL y VERIFICABLE relacionado con Venezuela...
+
+Responde SOLO en formato JSON:
+{
+    "event": "Descripción detallada del evento...",
+    "historicalYear": año_del_evento,
+    "historicalMonth": mes,
+    "historicalDay": día
+}
 \`
 \`\`\`
 
-### Cambiar Categorías
-
-Las categorías disponibles son:
-- Historia Patria
-- Cultura
-- Ciencia
-- Deportes
-- Arte
-- Sociedad
-
-Puedes modificarlas en el prompt o agregar nuevas según tus necesidades.
-
 ### Estilos y Temas
 
-Los estilos están en `app/globals.css` y usan variables CSS para fácil personalización:
+Los estilos están en `app/globals.css` usando variables CSS:
 
 \`\`\`css
 :root {
-  --background: ...
-  --foreground: ...
-  --primary: ...
-  --secondary: ...
-  --accent: ...
+  --background: 222.2 84% 4.9%;
+  --foreground: 210 40% 98%;
+  --primary: 217.2 91.2% 59.8%;
+  --secondary: 217.2 32.6% 17.5%;
+  --accent: 43 96% 56%;
 }
 \`\`\`
 
 ## 🔒 Seguridad
 
-- ✅ Row Level Security (RLS) habilitado en Supabase
-- ✅ Service role key solo en el servidor
-- ✅ Token de autorización para el endpoint de generación
-- ✅ Variables de entorno para credenciales sensibles
-- ✅ Validación de datos en el backend
+- ✅ **Row Level Security (RLS)** habilitado en Supabase
+- ✅ **Service role key** solo en el servidor (nunca en el cliente)
+- ✅ **Variables de entorno** sin prefijo `NEXT_PUBLIC_` para mayor seguridad
+- ✅ **Validación de datos** en el backend
+- ✅ **API keys** protegidas en `.env.local` (gitignored)
+- ✅ **Sanitización** de respuestas de IA
 
 ## 🚢 Despliegue
 
 ### Vercel (Recomendado)
 
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/ElPokaReal/ephemeris-venezuela)
+
 1. Haz push de tu código a GitHub
 2. Importa el proyecto en [Vercel](https://vercel.com)
-3. Configura las variables de entorno
-4. Despliega
+3. Configura las variables de entorno:
+   - `GEMINI_API_KEY`
+   - `SUPABASE_URL`
+   - `SUPABASE_SERVICE_KEY`
+   - `SUPABASE_ANON_KEY`
+4. Despliega automáticamente
 
-### Netlify
+### Variables de Entorno en Vercel
 
-\`\`\`bash
-npm run build
-netlify deploy --prod
+Ve a **Settings** → **Environment Variables** y agrega:
+
+\`\`\`
+GEMINI_API_KEY=tu_key_aqui
+SUPABASE_URL=https://xxxxx.supabase.co
+SUPABASE_SERVICE_KEY=tu_service_key_aqui
+SUPABASE_ANON_KEY=tu_anon_key_aqui
 \`\`\`
 
-### Docker
-
-\`\`\`dockerfile
-FROM node:18-alpine
-WORKDIR /app
-COPY package*.json ./
-RUN npm install
-COPY . .
-RUN npm run build
-CMD ["npm", "start"]
-\`\`\`
+Selecciona: **Production**, **Preview**, y **Development**
 
 ## 📊 Base de Datos
 
@@ -281,44 +325,92 @@ CMD ["npm", "start"]
 
 | Campo | Tipo | Descripción |
 |-------|------|-------------|
-| id | UUID | Identificador único |
-| date | DATE | Fecha completa (YYYY-MM-DD) |
-| day_month | TEXT | Día y mes legible ("15 de Octubre") |
-| year | TEXT | Año del evento histórico |
-| category | TEXT | Categoría de la efeméride |
-| title | TEXT | Título del evento |
-| description | TEXT | Descripción detallada |
-| created_at | TIMESTAMP | Fecha de creación |
-| updated_at | TIMESTAMP | Última actualización |
+| id | SERIAL | Identificador único autoincremental |
+| day | INTEGER | Día del mes (1-31) |
+| month | INTEGER | Mes del año (1-12) |
+| year | INTEGER | Año actual para mostrar |
+| event | TEXT | Descripción completa del evento histórico |
+| display_date | DATE | Fecha de visualización (YYYY-MM-DD) |
+| historical_day | INTEGER | Día histórico real del evento |
+| historical_month | INTEGER | Mes histórico real del evento |
+| historical_year | INTEGER | Año histórico real del evento |
+| created_at | TIMESTAMP | Fecha de creación del registro |
+| updated_at | TIMESTAMP | Última actualización del registro |
+
+### Políticas RLS
+
+- **SELECT**: Público (cualquiera puede leer)
+- **INSERT**: Solo con service role key
+- **UPDATE**: Solo con service role key
+- **DELETE**: Solo con service role key
+
+## 📚 Documentación Adicional
+
+- **[GEMINI-API.md](docs/GEMINI-API.md)** - Guía completa de la API de Gemini
+- **[ENVIRONMENT-VARIABLES.md](docs/ENVIRONMENT-VARIABLES.md)** - Configuración de variables de entorno
+
+## 🔧 Troubleshooting
+
+### Error: "Faltan las variables de entorno"
+
+Verifica que `.env.local` existe y tiene todas las variables requeridas.
+
+### Error: "Invalid API key"
+
+- Verifica que tu API key de Gemini es correcta
+- Genera una nueva en [Google AI Studio](https://makersuite.google.com/app/apikey)
+
+### Error: "Cannot connect to Supabase"
+
+- Verifica que la URL de Supabase es correcta
+- Verifica que el proyecto está activo
+- Verifica las keys en Settings → API
+
+### No se genera contenido
+
+- Verifica que ejecutaste el schema SQL en Supabase
+- Ejecuta `npm run generate` manualmente
+- Revisa los logs para ver errores específicos
 
 ## 🤝 Contribuir
 
-Las contribuciones son bienvenidas. Por favor:
+Las contribuciones son bienvenidas:
 
-1. Haz fork del proyecto
-2. Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
-3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
+1. Fork el proyecto
+2. Crea tu rama (`git checkout -b feature/AmazingFeature`)
+3. Commit tus cambios (`git commit -m 'Add: nueva característica'`)
 4. Push a la rama (`git push origin feature/AmazingFeature`)
 5. Abre un Pull Request
 
 ## 📄 Licencia
 
-Este proyecto está bajo la Licencia MIT. Ver el archivo `LICENSE` para más detalles.
+Este proyecto está bajo la Licencia MIT.
 
 ## 🙏 Agradecimientos
 
-- Datos históricos generados por Google Gemini AI
+- **Google Gemini AI** - Generación de contenido histórico
+- **Supabase** - Base de datos y backend
+- **Vercel** - Hosting y deployment
+- **shadcn/ui** - Componentes UI
 - Diseño inspirado en la estética colonial venezolana
-- Componentes UI de [shadcn/ui](https://ui.shadcn.com)
 
-## 📞 Soporte
+## 🔗 Enlaces Útiles
 
-Si tienes alguna pregunta o problema:
+- [Demo en Vivo](https://ephemeris-venezuela.vercel.app)
+- [Documentación de Gemini](https://ai.google.dev/gemini-api/docs)
+- [Documentación de Supabase](https://supabase.com/docs)
+- [Documentación de Next.js](https://nextjs.org/docs)
 
-1. Revisa la documentación
-2. Busca en los issues existentes
-3. Crea un nuevo issue con detalles
+## 📞 Contacto
+
+Si tienes preguntas o sugerencias:
+
+- 🐛 [Reportar un bug](https://github.com/ElPokaReal/ephemeris-venezuela/issues)
+- 💡 [Solicitar una característica](https://github.com/ElPokaReal/ephemeris-venezuela/issues)
+- 📧 Contacto: [GitHub](https://github.com/ElPokaReal)
 
 ---
 
-Hecho con ❤️ para Venezuela 🇻🇪
+**Hecho con ❤️ para Venezuela 🇻🇪**
+
+*Preservando nuestra historia, un día a la vez.*

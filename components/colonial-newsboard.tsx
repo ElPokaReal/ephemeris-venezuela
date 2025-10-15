@@ -3,7 +3,7 @@
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { BookOpen, Share2, Twitter, Facebook, Linkedin, Link2 } from "lucide-react"
+import { BookOpen, Share2, X, Facebook, Linkedin, Link2 } from "lucide-react"
 import { useState, useEffect } from "react"
 import { toast } from "sonner"
 
@@ -26,6 +26,7 @@ export function ColonialNewsboard() {
   const [displayedTitle, setDisplayedTitle] = useState("")
   const [displayedDescription, setDisplayedDescription] = useState("")
   const [isTitleComplete, setIsTitleComplete] = useState(false)
+  const [isDescriptionComplete, setIsDescriptionComplete] = useState(false)
   const [showShareMenu, setShowShareMenu] = useState(false)
 
   // Obtener efeméride del día
@@ -58,18 +59,19 @@ export function ColonialNewsboard() {
     setIsTitleComplete(false)
 
     // Extraer título (primera oración del evento)
-    const firstSentence = ephemeris.event.split('.')[0] + '.'
+    const sentences = ephemeris.event.split('. ')
+    const firstSentence = sentences[0] + '.'
     
     let titleIndex = 0
     const titleInterval = setInterval(() => {
       if (titleIndex < firstSentence.length) {
-        setDisplayedTitle((prev) => prev + firstSentence[titleIndex])
+        setDisplayedTitle(firstSentence.substring(0, titleIndex + 1))
         titleIndex++
       } else {
         clearInterval(titleInterval)
         setIsTitleComplete(true)
       }
-    }, 50)
+    }, 30)
 
     return () => clearInterval(titleInterval)
   }, [ephemeris])
@@ -78,19 +80,29 @@ export function ColonialNewsboard() {
   useEffect(() => {
     if (!isTitleComplete || !ephemeris) return
 
-    // Descripción es el resto del evento
-    const firstSentence = ephemeris.event.split('.')[0] + '.'
-    const restOfEvent = ephemeris.event.substring(firstSentence.length).trim()
+    setIsDescriptionComplete(false)
+
+    // Descripción es el resto del evento (después de la primera oración)
+    const sentences = ephemeris.event.split('. ')
+    const restOfEvent = sentences.length > 1 
+      ? sentences.slice(1).join('. ')
+      : ''
+
+    if (!restOfEvent) {
+      setIsDescriptionComplete(true)
+      return
+    }
 
     let descriptionIndex = 0
     const descriptionInterval = setInterval(() => {
       if (descriptionIndex < restOfEvent.length) {
-        setDisplayedDescription((prev) => prev + restOfEvent[descriptionIndex])
+        setDisplayedDescription(restOfEvent.substring(0, descriptionIndex + 1))
         descriptionIndex++
       } else {
         clearInterval(descriptionInterval)
+        setIsDescriptionComplete(true)
       }
-    }, 30)
+    }, 20)
 
     return () => clearInterval(descriptionInterval)
   }, [isTitleComplete, ephemeris])
@@ -106,10 +118,10 @@ export function ColonialNewsboard() {
     ? `Efeméride de Venezuela - ${ephemeris.day} de ${getMonthName(ephemeris.month)} de ${ephemeris.year}` 
     : ''
 
-  const handleShareTwitter = () => {
-    const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`
+  const handleShareX = () => {
+    const url = `https://x.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`
     window.open(url, '_blank', 'width=600,height=400')
-    toast.success('Compartiendo en Twitter')
+    toast.success('Compartiendo en X')
   }
 
   const handleShareFacebook = () => {
@@ -146,11 +158,21 @@ export function ColonialNewsboard() {
 
   if (error || !ephemeris) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center px-4">
         <div className="text-center max-w-md">
-          <BookOpen className="text-destructive mx-auto mb-4" size={48} />
-          <p className="text-lg text-destructive mb-4">Error al cargar la efeméride</p>
-          <p className="text-sm text-muted-foreground">{error}</p>
+          <BookOpen className="text-secondary mx-auto mb-6" size={64} />
+          <h2 className="text-2xl font-serif text-primary mb-4 font-bold">
+            Aún no hay efemérides generadas
+          </h2>
+          <p className="text-muted-foreground mb-6">
+            Para generar la primera efeméride, ejecuta:
+          </p>
+          <code className="block bg-secondary/10 text-secondary px-4 py-3 rounded-md font-mono text-sm mb-4">
+            bun run generate
+          </code>
+          <p className="text-xs text-muted-foreground">
+            Consulta el README.md para más información
+          </p>
         </div>
       </div>
     )
@@ -239,7 +261,7 @@ export function ColonialNewsboard() {
             {/* Title with typewriter effect */}
             <h2 className="text-4xl md:text-5xl lg:text-6xl font-serif text-primary mb-8 leading-tight text-balance font-bold">
               {displayedTitle}
-              <span className="animate-pulse">|</span>
+              {!isTitleComplete && <span className="animate-pulse">|</span>}
             </h2>
 
             {/* Decorative divider - Venezuelan style */}
@@ -256,12 +278,12 @@ export function ColonialNewsboard() {
             </div>
 
             {/* Description with typewriter effect */}
-            <p className="text-foreground/90 leading-relaxed text-lg md:text-xl lg:text-2xl text-pretty mb-8">
-              {displayedDescription}
-              {isTitleComplete && displayedDescription.length < (ephemeris.event.substring(ephemeris.event.split('.')[0].length + 1).trim().length) && (
-                <span className="animate-pulse">|</span>
-              )}
-            </p>
+            {displayedDescription && (
+              <p className="text-foreground/90 leading-relaxed text-lg md:text-xl lg:text-2xl text-pretty mb-8">
+                {displayedDescription}
+                {!isDescriptionComplete && <span className="animate-pulse">|</span>}
+              </p>
+            )}
 
             {/* Share buttons */}
             <div className="flex items-center justify-center gap-3 pt-6 border-t border-secondary/30">
@@ -269,11 +291,11 @@ export function ColonialNewsboard() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={handleShareTwitter}
+                onClick={handleShareX}
                 className="border-secondary hover:bg-secondary hover:text-secondary-foreground"
               >
-                <Twitter className="w-4 h-4 mr-2" />
-                Twitter
+                <X className="w-4 h-4 mr-2" />
+                X
               </Button>
               <Button
                 variant="outline"
@@ -307,22 +329,9 @@ export function ColonialNewsboard() {
         </Card>
 
         <div className="text-center mt-10 pt-8 border-t-2 border-secondary">
-          <div className="flex items-center justify-center mb-4">
-            <div className="h-0.5 bg-secondary flex-1 max-w-xs"></div>
-            <div className="mx-6 flex gap-2">
-              <div className="w-2 h-2 bg-accent rotate-45"></div>
-              <div className="w-2 h-2 bg-secondary rotate-45"></div>
-              <div className="w-2 h-2 bg-accent rotate-45"></div>
-            </div>
-            <div className="h-0.5 bg-secondary flex-1 max-w-xs"></div>
-          </div>
 
           <p className="text-secondary text-base italic mb-3 font-semibold">
             Preservando la Memoria Histórica de Nuestra Nación
-          </p>
-
-          <p className="text-sm text-muted-foreground uppercase tracking-[0.25em] font-semibold">
-            Generado con Inteligencia Artificial
           </p>
         </div>
       </div>

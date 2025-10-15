@@ -36,6 +36,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Efemérides Venezolanas",
     description: "Historia diaria de Venezuela con diseño colonial",
+    site: "@efemeridesve",
   },
   robots: {
     index: true,
@@ -50,10 +51,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es">
-      <body
-        className={`font-serif ${ebGaramond.variable} ${geistMono.variable}`}
-        style={{ fontFamily: "var(--font-eb-garamond)" }}
-      >
+      <body className={`${ebGaramond.variable} ${geistMono.variable}`}>
         <Suspense fallback={null}>{children}</Suspense>
         <Toaster position="bottom-right" richColors />
         <Analytics />

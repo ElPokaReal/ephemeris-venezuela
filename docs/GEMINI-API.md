@@ -10,10 +10,10 @@ POST https://generativelanguage.googleapis.com/v1beta/models/{model}:generateCon
 
 ### Modelo
 
-Utilizamos `gemini-1.5-flash` por su balance entre velocidad y calidad:
+Utilizamos `gemini-2.5-flash` por su excelente balance entre velocidad, calidad y precio:
 
 ```
-https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={API_KEY}
+https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={API_KEY}
 ```
 
 ## Estructura de la Petición
@@ -88,22 +88,24 @@ const content = response.data.candidates?.[0]?.content?.parts?.[0]?.text
 
 ## Modelos Disponibles
 
-### Gemini 1.5 Flash
-- **Nombre**: `gemini-1.5-flash`
-- **Uso**: Tareas rápidas y frecuentes
-- **Ventajas**: Rápido, eficiente, económico
-- **Límite de tokens**: 1M de entrada, 8K de salida
+### Gemini 2.5 Flash (Recomendado) ⭐
+- **Nombre**: `gemini-2.5-flash`
+- **Uso**: Mejor modelo en relación precio-rendimiento
+- **Ventajas**: Rápido, eficiente, económico, excelente calidad
+- **Límite de tokens**: 1M de entrada, 65K de salida
+- **Características**: Thinking, Function calling, Code execution
 
-### Gemini 1.5 Pro
-- **Nombre**: `gemini-1.5-pro`
-- **Uso**: Tareas complejas que requieren más razonamiento
-- **Ventajas**: Mayor capacidad de razonamiento
-- **Límite de tokens**: 2M de entrada, 8K de salida
+### Gemini 2.5 Pro
+- **Nombre**: `gemini-2.5-pro`
+- **Uso**: Tareas complejas que requieren razonamiento avanzado
+- **Ventajas**: Máxima capacidad de razonamiento
+- **Límite de tokens**: 2M de entrada, 65K de salida
 
-### Gemini 2.0 Flash (Experimental)
-- **Nombre**: `gemini-2.0-flash-exp`
-- **Uso**: Última versión experimental
-- **Ventajas**: Mejoras en velocidad y calidad
+### Gemini 2.5 Flash-Lite
+- **Nombre**: `gemini-2.5-flash-lite`
+- **Uso**: Tareas ultra rápidas y de bajo costo
+- **Ventajas**: Velocidad extrema, muy económico
+- **Límite de tokens**: Menor que Flash estándar
 
 ## Manejo de Errores
 
