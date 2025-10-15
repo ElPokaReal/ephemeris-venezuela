@@ -19,6 +19,7 @@ export interface Ephemeris {
   historical_year: number | null
   priority: number
   source: string | null
+  url: string | null
   confidence: 'high' | 'medium' | 'low' | null
   created_at: string | null
   updated_at: string | null

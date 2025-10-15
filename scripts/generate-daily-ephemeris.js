@@ -147,12 +147,14 @@ Responde SOLO en formato JSON:
     "historicalMonth": ${month},
     "historicalDay": ${day},
     "source": "Fuente de verificación (ej: Wikipedia, Biblioteca Nacional, etc.)",
+    "url": "https://... (URL completa con más información)",
     "confidence": "high/medium/low"
 }
 
 VALIDACIÓN OBLIGATORIA:
 ✓ Fecha exacta verificada: ${day}/${month}/[año]
 ✓ Evento documentado en fuentes históricas
+✓ URL válida y accesible
 ✓ Relevancia para Venezuela confirmada
 ✗ NO inventes eventos
 ✗ NO uses fechas aproximadas
@@ -164,7 +166,8 @@ EJEMPLO CORRECTO:
     "historicalYear": 1726,
     "historicalMonth": 10,
     "historicalDay": 15,
-    "source": "Wikipedia - Juan Vicente Bolívar y Ponte",
+    "source": "Wikipedia",
+    "url": "https://es.wikipedia.org/wiki/Juan_Vicente_Bol%C3%ADvar_y_Ponte",
     "confidence": "high"
 }`
 
@@ -253,6 +256,9 @@ EJEMPLO CORRECTO:
         if (ephemeris.source) {
             console.log(`📚 Fuente: ${ephemeris.source}`)
         }
+        if (ephemeris.url) {
+            console.log(`🔗 URL: ${ephemeris.url}`)
+        }
         if (ephemeris.confidence) {
             console.log(`🎯 Nivel de confianza: ${ephemeris.confidence}`)
         }
@@ -303,6 +309,7 @@ async function insertEphemeris(targetDate, ephemerisData) {
         historical_year: ephemerisData.historicalYear,
         priority: 1, // Prioridad por defecto
         source: ephemerisData.source || null,
+        url: ephemerisData.url || null,
         confidence: ephemerisData.confidence || null,
     }
 
